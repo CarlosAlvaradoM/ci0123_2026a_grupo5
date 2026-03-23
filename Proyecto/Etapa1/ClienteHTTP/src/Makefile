@@ -1,24 +1,24 @@
-# Linux Makefile
-# Socket classes
-#
-
 CXX := g++
 CXXFLAGS := -g -c
-DEPS := Socket.h VSocket.h
-TARGETS := ipv4-test.out ipv6-test.out
+LDFLAGS := -g
 
-all: $(TARGETS)
+DEPS := Socket.h VSocket.h
+TARGET := cliente
+
+OBJS := main.o Socket.o VSocket.o
+
+all: $(TARGET)
 
 %.o: %.cc $(DEPS)
 	$(CXX) $(CXXFLAGS) $< -o $@
 
-ipv4-test.out: ipv4-test.o Socket.o VSocket.o
-	$(CXX) -g $^ -o $@
+$(TARGET): $(OBJS)
+	$(CXX) $(LDFLAGS) $^ -o $@
 
-ipv6-test.out: ipv6-test.o Socket.o VSocket.o
-	$(CXX) -g $^ -o $@
+run: $(TARGET)
+	./$(TARGET)
 
 clean:
-	@rm -f *.o *.out
+	@rm -f *.o *.out $(TARGET)
 
-.PHONY: all clean
+.PHONY: all clean run
