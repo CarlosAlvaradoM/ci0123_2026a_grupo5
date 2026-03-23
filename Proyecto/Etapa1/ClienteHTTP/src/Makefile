@@ -5,7 +5,7 @@ LDFLAGS := -g
 DEPS := Socket.h VSocket.h
 TARGET := cliente
 
-OBJS := main.o Socket.o VSocket.o Menu.o
+OBJS := main.o Socket.o VSocket.o Menu.o Parser.o
 
 all: $(TARGET)
 
