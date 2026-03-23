@@ -5,7 +5,6 @@
   *
   *  ******   VSocket base class interface
   *
-  * (Fedora version)
   *
  **/
 
