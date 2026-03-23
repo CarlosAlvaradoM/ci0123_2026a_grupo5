@@ -1,0 +1,68 @@
+# ==================== ARCHIVOS COMPILADOS ====================
+*.o
+*.out
+*.exe
+*.a
+*.so
+*.dll
+*.obj
+*.lib
+*.dylib
+
+# ==================== EJECUTABLES ====================
+programa
+main
+test
+ordenador_test
+a.out
+
+# ==================== ARCHIVOS DE CONFIGURACIÓN DE IDEs ====================
+# VS Code
+.vscode/
+*.code-workspace
+
+# CLion
+.idea/
+cmake-build-*/
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+
+# ==================== ARCHIVOS TEMPORALES Y DE RESPALDO ====================
+*~
+*.backup
+*.swp
+*.swo
+*.tmp
+*.temp
+*.log
+
+# ==================== SISTEMA ====================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==================== DIRECTORIOS DE BUILD ====================
+build/
+dist/
+bin/
+obj/
+Debug/
+Release/
+
+# ==================== CMAKE ====================
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# ==================== DOCUMENTACIÓN AUTOGENERADA ====================
+docs/html/
+docs/latex/
+doxygen/
+
+# ==================== ARCHIVOS DE DATOS GRANDES ====================
+*.zip
+*.tar
+*.gz
+*.7z
