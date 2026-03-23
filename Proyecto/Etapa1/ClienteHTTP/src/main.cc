@@ -22,6 +22,7 @@ int main( int argc, char * argv[] ) {
                         "Host: os.ecci.ucr.ac.cr\r\n"
                         "\r\n";
 
+
    VSocket * s;	
    char a[512];
 
@@ -33,7 +34,9 @@ int main( int argc, char * argv[] ) {
       a[bytesRead] = '\0'; // Aseguramos que la cadena termine correctamente
       printf( "%s", a);
    }
+   /*
    s->Read( a, 512 );
    printf( "%s\n", a);
+   */
 
 }
