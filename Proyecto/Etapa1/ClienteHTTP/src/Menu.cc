@@ -27,13 +27,17 @@ int elegirFigura() {
    // Figura a elejir
    int opcion;
    // Enciclar al usuario hasta que elija opcion valida
-   do {
+   while (1) {
       // Consola
       printf("Seleccione una figura: ");
       // Guardar opcion
       scanf("%d", &opcion);
-     // Comprobar respuesta 
-   } while (opcion < 1 || opcion > TOTAL_FIGURAS);
+      // Comprobar respuesta
+      if (opcion >= 1 && opcion <= TOTAL_FIGURAS) {
+         break;
+      }
+      printf("Opcion invalida. Debes elegir un numero entre 1 y %d.\n", TOTAL_FIGURAS);
+   }
 
    // Retornar
    return opcion - 1;
@@ -43,13 +47,17 @@ int elegirParte() {
    // Parte de la figura
    int parte;
    // Enciclar si no digita opcion correcta
-   do {
+   while (1) {
       // Consola
       printf("Seleccione la parte (1 o 2): ");
       // Guardar
       scanf("%d", &parte);
-     // Comprobar 
-   } while (parte != 1 && parte != 2);
+      // Comprobar
+      if (parte == 1 || parte == 2) {
+         break;
+      }
+      printf("Opcion invalida. Debes elegir un numero entre 1 y 2.\n");
+   }
 
    // Retornar respuesta
    return parte;
