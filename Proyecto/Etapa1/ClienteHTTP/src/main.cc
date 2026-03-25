@@ -6,7 +6,7 @@
  * de la misma y muestra las piezas requeridas para construir la figura
  * Soporta IPv4 e IPv6 mediante seleccion en tiempo de ejecucion
  * 
- * @author Carlos Alvarado && Kiara Brenes
+ * @author Carlos Alvarado &&
  * @date 2026
  */
 
@@ -71,8 +71,15 @@ int main( int argc, char * argv[] ) {
    printf("\nSeleccione protocolo de red:\n");
    printf("1. IPv4\n");
    printf("2. IPv6\n");
-   printf("Opcion: ");
-   scanf("%d", &opcionRed);
+
+   while (1) {
+      printf("Opcion: ");
+      scanf("%d", &opcionRed);
+      if (opcionRed == 1 || opcionRed == 2) {
+         break;
+      }
+      printf("Opcion invalida. Debes elegir un numero entre 1 y 2.\n");
+   }
    
    if (opcionRed == 2) {
       usarIPv6 = 1;
