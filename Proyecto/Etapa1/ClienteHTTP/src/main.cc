@@ -5,7 +5,7 @@
  * Este programa permite al usuario seleccionar una figura LEGO y una parte
  * de la misma y muestra las piezas requeridas para construir la figura
  * 
- * @author Carlos Alvarado &&
+ * @author Carlos Alvarado && Kiara Brenes
  * @date 2026
  */
 
