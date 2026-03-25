@@ -83,6 +83,7 @@ class Socket : public VSocket {
 
    protected:
       // No hay atributos protegidos adicionales
+      friend class SSLsocket;
 };
 
 #endif
