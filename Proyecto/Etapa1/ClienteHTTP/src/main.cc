@@ -4,6 +4,7 @@
  * 
  * Este programa permite al usuario seleccionar una figura LEGO y una parte
  * de la misma y muestra las piezas requeridas para construir la figura
+ * Soporta IPv4 e IPv6 mediante seleccion en tiempo de ejecucion
  * 
  * @author Carlos Alvarado && Kiara Brenes
  * @date 2026
@@ -31,7 +32,7 @@
  * 7. Procesa y muestra las piezas LEGO encontradas
  * 
  * @param argc numero de argumentos
- * @param argv argumentos: --ssl para usar HTTPS, --http para HTTP
+ * @param argv argumentos: --ssl para usar HTTPS, --http para HTTP, --ipv6 para usar IPv6
  * @return int Retorna 0 ejecucion exitosa
  */
 int main( int argc, char * argv[] ) {
@@ -41,15 +42,21 @@ int main( int argc, char * argv[] ) {
    const char * host = "os.ecci.ucr.ac.cr";
    const char * puerto_http = "80";
    const char * puerto_https = "443";
+   const char * ipv6_addr = "fe80::8f5a:e2e1:7256:ffe3%enp0s31f6";
 
    VSocket * s;	
    char buffer[512];
    char request[512];
    int usarSSL = 0;
+   int usarIPv6 = 0;
+   int opcionRed = 0;
 
    for (int i = 1; i < argc; i++) {
       if (strcmp(argv[i], "--ssl") == 0) {
          usarSSL = 1;
+      }
+      if (strcmp(argv[i], "--ipv6") == 0) {
+         usarIPv6 = 1;
       }
    }
 
@@ -60,13 +67,35 @@ int main( int argc, char * argv[] ) {
    const char* figura = obtenerFigura(figuraUsuario);
 
    construirRequest(request, obtenerFigura(figuraUsuario), parteFiguraUsuario);
+   
+   printf("\nSeleccione protocolo de red:\n");
+   printf("1. IPv4\n");
+   printf("2. IPv6\n");
+   printf("Opcion: ");
+   scanf("%d", &opcionRed);
+   
+   if (opcionRed == 2) {
+      usarIPv6 = 1;
+      printf("Usando IPv6: %s\n", ipv6_addr);
+   } else {
+      usarIPv6 = 0;
+      printf("Usando IPv4\n");
+   }
 
    if (usarSSL) {
-      s = new SSLsocket('s');
-      s->Connect(host, puerto_https);
+      s = new SSLsocket('s', usarIPv6);
+      if (usarIPv6) {
+         s->Connect(ipv6_addr, puerto_https);
+      } else {
+         s->Connect(host, puerto_https);
+      }
    } else {
-      s = new Socket('s');
-      s->Connect(ose, 80);
+      s = new Socket('s', usarIPv6);
+      if (usarIPv6) {
+         s->Connect(ipv6_addr, puerto_http);
+      } else {
+         s->Connect(ose, 80);
+      }
    }
    
    s->Write(request);
