@@ -4,12 +4,8 @@
 #include <cstring>		// memset
 #include <netdb.h>		// getaddrinfo, freeaddrinfo
 #include <unistd.h>		// close
-/*
-#include <cstddef>
-#include <cstdio>
-
-//#include <sys/types.h>
-*/
+#include <ifaddrs.h>            // Para obtener interfaces de red
+#include <net/if.h>             // Para if_nametoindex
 #include "VSocket.h"
 
 void VSocket::Init( char t, bool IPv6 ){
@@ -73,7 +69,7 @@ void VSocket::Close(){
 int VSocket::TryToConnect(const char* hostip, int port) {
     int st;
 
-    // IPv6, usar GETADDRINFO
+    // IPv6
     if (this->IPv6) {
         struct addrinfo hints;
         struct addrinfo* result;
@@ -92,8 +88,25 @@ int VSocket::TryToConnect(const char* hostip, int port) {
         // hostip ya es una dirección numérica
         hints.ai_flags = AI_NUMERICHOST;
         
+        // Manejar el scope_id para direcciones link-local
+        char hostip_clean[256];
+        strncpy(hostip_clean, hostip, sizeof(hostip_clean) - 1);
+        hostip_clean[sizeof(hostip_clean) - 1] = '\0';
+        
+        char* scope_ptr = strchr(hostip_clean, '%');
+        int scope_id = 0;
+        
+        if (scope_ptr != NULL) {
+            *scope_ptr = '\0';
+            char* iface_name = scope_ptr + 1;
+            scope_id = if_nametoindex(iface_name);
+            if (scope_id == 0) {
+                throw std::runtime_error("VSocket::TryToConnect: interfaz no encontrada para IPv6");
+            }
+        }
+        
         // Resolver direccion
-        st = getaddrinfo(hostip, port_str, &hints, &result);
+        st = getaddrinfo(hostip_clean, port_str, &hints, &result);
     
         // Error
         if (st != 0) {
@@ -102,6 +115,11 @@ int VSocket::TryToConnect(const char* hostip, int port) {
         
         // Intentar conectar con cada dirección obtenida
         for (rp = result; rp != NULL; rp = rp->ai_next) {
+            // Establecer scope_id si es necesario
+            if (scope_id != 0 && rp->ai_family == AF_INET6) {
+                struct sockaddr_in6* addr6 = (struct sockaddr_in6*)rp->ai_addr;
+                addr6->sin6_scope_id = scope_id;
+            }
             st = connect(this->sockId, rp->ai_addr, rp->ai_addrlen);
             // Exito
             if (st == 0) {
@@ -187,4 +205,3 @@ int VSocket::TryToConnect( const char *host, const char *service ) {
     
     return st;
 }
-
