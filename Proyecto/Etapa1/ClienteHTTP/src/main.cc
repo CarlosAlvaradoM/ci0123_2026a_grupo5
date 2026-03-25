@@ -11,9 +11,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "Parser.h"
 #include "Socket.h"
+#include "SSLsocket.h"
 #include "Menu.h"
 
 /**
@@ -28,55 +30,60 @@
  * 6. Extrae el cuerpo HTML de la respuesta HTTP
  * 7. Procesa y muestra las piezas LEGO encontradas
  * 
- * @param argc no utilizado
- * @param argv no utilizado
+ * @param argc numero de argumentos
+ * @param argv argumentos: --ssl para usar HTTPS, --http para HTTP
  * @return int Retorna 0 ejecucion exitosa
  */
 int main( int argc, char * argv[] ) {
    const char * os = "http://os.ecci.ucr.ac.cr/";
    const char * osi = "10.84.166.62";
    const char * ose = "163.178.104.62";
+   const char * host = "os.ecci.ucr.ac.cr";
+   const char * puerto_http = "80";
+   const char * puerto_https = "443";
 
    VSocket * s;	
    char buffer[512];
    char request[512];
+   int usarSSL = 0;
 
-   // Mostrar el menu
+   for (int i = 1; i < argc; i++) {
+      if (strcmp(argv[i], "--ssl") == 0) {
+         usarSSL = 1;
+      }
+   }
+
    mostrarMenu();
-   // Elejir figura
    int figuraUsuario = elegirFigura();
-   // Elejir parte de la figura
    int parteFiguraUsuario = elegirParte();
 
    const char* figura = obtenerFigura(figuraUsuario);
 
-   // Hacer el request con datos del usuario
    construirRequest(request, obtenerFigura(figuraUsuario), parteFiguraUsuario);
 
-   // Socket
-   s = new Socket( 's' );
-   s->Connect( ose, 80 );	// usar "osi" en la ECCI, "ose" de sus casas
+   if (usarSSL) {
+      s = new SSLsocket('s');
+      s->Connect(host, puerto_https);
+   } else {
+      s = new Socket('s');
+      s->Connect(ose, 80);
+   }
+   
    s->Write(request);
 
-   // Leer respuesta
    std::string respuesta;
    int bytesRead;
 
-   // Leer socket en bloques
    while ( (bytesRead = s->Read( buffer, 511 )) > 0 ) {
       buffer[bytesRead] = '\0';
       respuesta += buffer;
    }
 
-   // Libera memoria de socket
    delete s;
 
-   // Extraer html
    std::string html = extraerHTML(respuesta);
 
-   // Mostrar los bricks
    imprimirBricks(html, parteFiguraUsuario, figura);
    return 0;
 
 }
-
