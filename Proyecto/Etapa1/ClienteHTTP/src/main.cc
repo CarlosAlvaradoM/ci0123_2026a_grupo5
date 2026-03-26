@@ -6,7 +6,7 @@
  * de la misma y muestra las piezas requeridas para construir la figura
  * Soporta IPv4 e IPv6 mediante seleccion en tiempo de ejecucion
  * 
- * @author Carlos Alvarado &&
+ * @author Carlos Alvarado && Kiara Brenes
  * @date 2026
  */
 
