@@ -6,6 +6,7 @@
 #include <unistd.h>		// close
 #include <ifaddrs.h>            // Para obtener interfaces de red
 #include <net/if.h>             // Para if_nametoindex
+#include <errno.h>              // Para errno
 #include "VSocket.h"
 
 void VSocket::Init( char t, bool IPv6 ){
@@ -101,7 +102,7 @@ int VSocket::TryToConnect(const char* hostip, int port) {
             char* iface_name = scope_ptr + 1;
             scope_id = if_nametoindex(iface_name);
             if (scope_id == 0) {
-                throw std::runtime_error("VSocket::TryToConnect: interfaz no encontrada para IPv6");
+                throw std::runtime_error("Interfaz de red no encontrada para IPv6. Verifique que la interfaz especificada exista.");
             }
         }
         
@@ -114,6 +115,7 @@ int VSocket::TryToConnect(const char* hostip, int port) {
         }
         
         // Intentar conectar con cada dirección obtenida
+        int connect_error = -1;
         for (rp = result; rp != NULL; rp = rp->ai_next) {
             // Establecer scope_id si es necesario
             if (scope_id != 0 && rp->ai_family == AF_INET6) {
@@ -123,7 +125,10 @@ int VSocket::TryToConnect(const char* hostip, int port) {
             st = connect(this->sockId, rp->ai_addr, rp->ai_addrlen);
             // Exito
             if (st == 0) {
+                connect_error = 0;
                 break;
+            } else {
+                connect_error = errno;
             }
         }
 
@@ -131,7 +136,13 @@ int VSocket::TryToConnect(const char* hostip, int port) {
         freeaddrinfo(result);
         
         if (st == -1) {
-            throw std::runtime_error("VSocket::TryToConnect IPv6: connect falló");
+            if (connect_error == ENETUNREACH) {
+                throw std::runtime_error("Red IPv6 no alcanzable. Verifique que este conectado a la red de la ECCI o usando VPN.");
+            } else if (connect_error == EHOSTUNREACH) {
+                throw std::runtime_error("Host IPv6 no alcanzable. Verifique la direccion y su conexion de red.");
+            } else {
+                throw std::runtime_error("VSocket::TryToConnect IPv6: connect falló");
+            }
         }
 
     // IPV4
@@ -152,7 +163,15 @@ int VSocket::TryToConnect(const char* hostip, int port) {
         // Intentar establecer la conexion
         st = connect(this->sockId, (struct sockaddr*)&host4, sizeof(host4));
         if (st == -1) {
-            throw std::runtime_error("VSocket::TryToConnect: connect falló para IPv4");
+            if (errno == ENETUNREACH) {
+                throw std::runtime_error("Red IPv4 no alcanzable. Verifique su conexion de red.");
+            } else if (errno == EHOSTUNREACH) {
+                throw std::runtime_error("Host IPv4 no alcanzable. Verifique la direccion del servidor.");
+            } else if (errno == ECONNREFUSED) {
+                throw std::runtime_error("Conexion rechazada. El servidor no esta disponible en el puerto especificado.");
+            } else {
+                throw std::runtime_error("VSocket::TryToConnect: connect falló para IPv4");
+            }
         }
     }
 
@@ -187,11 +206,14 @@ int VSocket::TryToConnect( const char *host, const char *service ) {
     }
     
     // Intentar conectar con cada direccion obtenida
+    int connect_error = -1;
     for (rp = result; rp != NULL; rp = rp->ai_next) {
         st = connect(this->sockId, rp->ai_addr, rp->ai_addrlen);
         // Exito
         if (st == 0) {
             break;
+        } else {
+            connect_error = errno;
         }
     }
     
@@ -200,7 +222,13 @@ int VSocket::TryToConnect( const char *host, const char *service ) {
     
     // Error
     if (st == -1) {
-        throw std::runtime_error("VSocket::TryToConnect DNS: no se pudo conectar a ninguna dirección");
+        if (connect_error == ENETUNREACH) {
+            throw std::runtime_error("Red no alcanzable. Verifique su conexion de red.");
+        } else if (connect_error == EHOSTUNREACH) {
+            throw std::runtime_error("Host no alcanzable. Verifique el nombre del servidor.");
+        } else {
+            throw std::runtime_error("VSocket::TryToConnect DNS: no se pudo conectar a ninguna dirección");
+        }
     }
     
     return st;
