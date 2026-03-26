@@ -10,9 +10,9 @@
 - **Carnet:** C4C337
 - **Correo:** carlos.alvaradomeneses@ucr.ac.cr
 ---
-- **Nombre:** 
-- **Carnet:** 
-- **Correo:** 
+- **Nombre:** Kiara Brenes Díaz
+- **Carnet:** C11208
+- **Correo:** kia.brenes@ucr.ac.cr
 
 ## Contenido del Repositorio
 
