@@ -8,6 +8,7 @@ all: $(TARGET)
 
 $(TARGET): $(SRCS) $(HEADERS)
 	$(CXX) $(CXXFLAGS) $(SRCS) -o $(TARGET)
+	chmod +x $(TARGET)
 
 run: all
 	./$(TARGET)
