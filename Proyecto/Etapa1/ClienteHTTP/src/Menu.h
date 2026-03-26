@@ -1,6 +1,12 @@
 /**
  * @file Menu.h
  * @brief Modulo para el menu para elejir piezas y sus partes
+ * 
+ * Proporciona funciones para mostrar el menu de figuras LEGO,
+ * seleccionar figura y parte, y construir la solicitud HTTP
+ * 
+ * @author Carlos Alvarado && Kiara Brenes
+ * @date 2026
  */
 
 #ifndef MENU_H
@@ -44,6 +50,9 @@ const char* obtenerFigura(int index);
 
 /**
  * @brief Obtiene la lista de figuras desde el servidor
+ * 
+ * Realiza una solicitud HTTP al servidor para obtener la lista de figuras disponibles.
+ * Si la conexion falla, utiliza una lista estatica por defecto.
  * 
  * @param usarIPv6 Indica si se usa IPv6
  * @param usarSSL Indica si se usa SSL

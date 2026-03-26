@@ -1,3 +1,14 @@
+/**
+ * @file Menu.cc
+ * @brief Implementacion del modulo de menu para seleccion de figuras LEGO
+ * 
+ * Contiene la logica para obtener la lista de figuras desde el servidor,
+ * mostrar el menu interactivo y construir las solicitudes HTTP
+ * 
+ * @author Carlos Alvarado && Kiara Brenes
+ * @date 2026
+ */
+
 #include <stdio.h>
 #include <string>
 #include <iostream>
@@ -23,6 +34,18 @@ static const char* figuras_estaticas[] = {
 
 static const int TOTAL_FIGURAS_ESTATICAS = 7;
 
+/**
+ * @brief Obtiene la lista de figuras desde el servidor
+ * 
+ * Realiza una solicitud HTTP GET a /lego/figuras.php y parsea el HTML
+ * para extraer los nombres de las figuras disponibles.
+ * 
+ * @param usarIPv6 Indica si se usa IPv6
+ * @param usarSSL Indica si se usa SSL
+ * @param hostIPv6 Direccion IPv6 opcional
+ * @param interfaz Nombre de la interfaz para IPv6
+ * @return int Numero de figuras encontradas
+ */
 int obtenerListaFigurasDelServidor(bool usarIPv6, bool usarSSL, const char* hostIPv6, const char* interfaz) {
     VSocket* s = nullptr;
     char buffer[4096];
@@ -183,11 +206,17 @@ int obtenerListaFigurasDelServidor(bool usarIPv6, bool usarSSL, const char* host
     }
 }
 
+/**
+ * @brief Libera la lista de figuras almacenada
+ */
 void liberarListaFiguras() {
     figuras.clear();
     listaInicializada = false;
 }
 
+/**
+ * @brief Muestra el menu de figuras disponibles en consola
+ */
 void mostrarMenu() {
     printf("   Menu de figuras disponibles\n");
     for (size_t i = 0; i < figuras.size(); i++) {
@@ -195,6 +224,11 @@ void mostrarMenu() {
     }
 }
 
+/**
+ * @brief Solicita al usuario seleccionar una figura
+ * 
+ * @return int Indice de la figura seleccionada (0-based)
+ */
 int elegirFigura() {
     int opcion;
     while (1) {
@@ -212,6 +246,11 @@ int elegirFigura() {
     return opcion - 1;
 }
 
+/**
+ * @brief Solicita al usuario seleccionar una parte de la figura
+ * 
+ * @return int Numero de parte (1 o 2)
+ */
 int elegirParte() {
     int parte;
     while (1) {
@@ -229,6 +268,12 @@ int elegirParte() {
     return parte;
 }
 
+/**
+ * @brief Obtiene el nombre de una figura por su indice
+ * 
+ * @param index Indice de la figura
+ * @return const char* Nombre de la figura, nullptr si el indice es invalido
+ */
 const char* obtenerFigura(int index) {
     if (index >= 0 && index < (int)figuras.size()) {
         return figuras[index].c_str();
@@ -236,6 +281,13 @@ const char* obtenerFigura(int index) {
     return nullptr;
 }
 
+/**
+ * @brief Construye la solicitud HTTP GET
+ * 
+ * @param buffer Buffer donde se almacena la solicitud
+ * @param figura Nombre de la figura
+ * @param parte Parte de la figura (1 o 2)
+ */
 void construirRequest(char* buffer, const char* figura, int parte) {
     sprintf(buffer,
         "GET /lego/list.php?figure=%s&part=%d HTTP/1.1\r\n"
