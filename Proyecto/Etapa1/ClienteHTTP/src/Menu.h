@@ -42,4 +42,20 @@ void construirRequest(char* buffer, const char* figura, int parte);
  */
 const char* obtenerFigura(int index);
 
+/**
+ * @brief Obtiene la lista de figuras desde el servidor
+ * 
+ * @param usarIPv6 Indica si se usa IPv6
+ * @param usarSSL Indica si se usa SSL
+ * @param hostIPv6 Direccion IPv6 opcional
+ * @param interfaz Nombre de la interfaz para IPv6
+ * @return int Numero de figuras encontradas, -1 si hay error
+ */
+int obtenerListaFigurasDelServidor(bool usarIPv6, bool usarSSL, const char* hostIPv6 = nullptr, const char* interfaz = nullptr);
+
+/**
+ * @brief Libera la memoria de la lista de figuras
+ */
+void liberarListaFiguras();
+
 #endif
