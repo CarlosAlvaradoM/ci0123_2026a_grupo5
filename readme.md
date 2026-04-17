@@ -12,7 +12,7 @@
 ---
 - **Nombre:** Kiara Brenes Díaz
 - **Carnet:** C11208
-- **Correo:** kia.brenes@ucr.ac.cr
+- **Correo:** kiara.brenesdiaz@ucr.ac.cr
 
 ## Contenido del Repositorio
 
