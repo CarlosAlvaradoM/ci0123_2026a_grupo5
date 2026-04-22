@@ -6,8 +6,7 @@
 #include <string>
 #include <iostream>
 
-int main()
-{
+int main() {
     // Crear y formatear el disco
     crearDat("figuras.dat");
     convertirBloque0ABitmap("figuras.dat");
@@ -131,8 +130,12 @@ int main()
 
     std::cout << "\nPez:\n";
     leerFigura("figuras.dat", "pez");
+
     std::cout << "\nGotica:\n";
     leerFigura("figuras.dat", "gotica");
+
+    std::string nombres = ListData("figuras.dat");
+    std::cout << "Figuras en el disco: " << nombres << std::endl;
 
     return 0;
 }

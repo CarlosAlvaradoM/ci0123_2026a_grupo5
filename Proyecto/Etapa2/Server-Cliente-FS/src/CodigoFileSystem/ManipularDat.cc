@@ -16,12 +16,12 @@ struct BloqueDatos {
     short siguienteBloque;
 };
 
-void leerFigura(const char* nombreArchivo, const char* nombreFigura) {
+std::string leerFigura(const char* nombreArchivo, const char* nombreFigura) {
+
     std::fstream archivo(nombreArchivo, std::ios::in | std::ios::binary);
     
     if (!archivo.is_open()) {
-        std::cout << "Error: No se pudo abrir el archivo" << std::endl;
-        return;
+        return "Error: No se pudo abrir el archivo\n";
     }
     
     Inodo inodo;
@@ -38,13 +38,14 @@ void leerFigura(const char* nombreArchivo, const char* nombreFigura) {
     }
     
     if (inodoEncontrado == -1) {
-        std::cout << "Figura '" << nombreFigura << "' no encontrada." << std::endl;
         archivo.close();
-        return;
+        return "Figura no encontrada\n";
     }
     
-    std::cout << "Leyendo figura '" << nombreFigura << "':" << std::endl;
-    std::cout << "----------------------------------------" << std::endl;
+    std::string resultado = "";
+    resultado += "Leyendo figura: ";
+    resultado += nombreFigura;
+    resultado += "\n----------------------------------------\n";
     
     short bloqueActual = inodo.primerBloque;
     int bytesLeidos = 0;
@@ -53,12 +54,13 @@ void leerFigura(const char* nombreArchivo, const char* nombreFigura) {
     while (bloqueActual != 65535 && bytesLeidos < inodo.tamano) {
         contadorBloques++;
         BloqueDatos bloque;
+        
         archivo.seekg(bloqueActual * 256);
         archivo.read(reinterpret_cast<char*>(&bloque), 242);
         
         for (int i = 0; i < 240 && bytesLeidos < inodo.tamano; i++) {
             if (bloque.datos[i] != '\0') {
-                std::cout << bloque.datos[i];
+                resultado += bloque.datos[i];
                 bytesLeidos++;
             }
         }
@@ -66,12 +68,12 @@ void leerFigura(const char* nombreArchivo, const char* nombreFigura) {
         bloqueActual = bloque.siguienteBloque;
     }
     
-    std::cout << std::endl;
-    std::cout << "----------------------------------------" << std::endl;
-    std::cout << "Total bloques usados: " << contadorBloques << std::endl;
-    std::cout << "Total bytes leidos: " << bytesLeidos << std::endl;
+    resultado += "\n----------------------------------------\n";
+    resultado += "Bloques usados: " + std::to_string(contadorBloques) + "\n";
+    resultado += "Bytes leidos: " + std::to_string(bytesLeidos) + "\n";
     
     archivo.close();
+    return resultado;
 }
 
 void escribirStringEnBloquesLibres(const char* nombreArchivo, const char* nombreFigura, const char* string) {
@@ -214,4 +216,40 @@ void escribirStringEnBloquesLibres(const char* nombreArchivo, const char* nombre
     }
     
     archivo.close();
+}
+
+
+std::string ListData(const char* nombreArchivo) {
+    std::fstream archivo(nombreArchivo, std::ios::in | std::ios::binary);
+    std::string listaNombres = "";
+    
+    if (!archivo.is_open()) {
+        return "Error: No se pudo abrir el archivo";
+    }
+
+    Inodo inodo;
+    bool primero = true;
+
+    // Recorrer los 16 inodos en el Bloque 1 (posicion 256)
+    for (int i = 0; i < 16; i++) {
+        archivo.seekg(256 + i * sizeof(Inodo));
+        archivo.read(reinterpret_cast<char*>(&inodo), sizeof(Inodo));
+        
+        // Si el inodo está marcado como activo (1)
+        if (inodo.activo == 1) {
+            if (!primero) {
+                listaNombres += ", "; // Separador
+            }
+            listaNombres += inodo.nombre;
+            primero = false;
+        }
+    }
+
+    archivo.close();
+    
+    if (listaNombres.empty()) {
+        return "No hay figuras guardadas.";
+    }
+
+    return listaNombres;
 }

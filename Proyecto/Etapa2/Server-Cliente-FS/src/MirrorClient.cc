@@ -14,7 +14,7 @@
 
 #include <stdio.h>
 #include <cstring>
-#include "Socket.h"
+#include "Servidor-Cliente/Socket.h"
 
 #define PORT 2026
 #define BUFSIZE 512
