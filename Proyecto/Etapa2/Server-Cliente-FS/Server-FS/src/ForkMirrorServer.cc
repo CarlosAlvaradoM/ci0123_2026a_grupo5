@@ -22,7 +22,7 @@
 
 #include <fstream>
 
-#include "Servidor-Cliente/Socket.h"
+#include "Socket.h"
 #include "CodigoFileSystem/ManipularDat.h"
 #include "CodigoFileSystem/CrearDat.h"
 #include "CodigoFileSystem/BitMap.h"
