@@ -32,11 +32,15 @@
 
 #define PORT 2026
 #define BUFSIZE 512
-#define RUTA_FS "CodigoFileSystem/figuras.dat"
+#define RUTA_FS "../src/CodigoFileSystem/figuras.dat"
 
 bool existeArchivo(const std::string& nombre);
 
 int main(int argc, char **argv) {
+
+   // Parametros sin uso
+   (void)argc;
+   (void)argv;
 
    // Verificar si el archivo figuras.dat existe
    bool existeFiguras = existeArchivo(RUTA_FS);
