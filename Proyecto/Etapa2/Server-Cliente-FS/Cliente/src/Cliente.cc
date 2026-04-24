@@ -45,7 +45,18 @@ void Cliente::run() {
  * @returns Un código de error. 0 en caso de éxito, -1 al contrario;
  */
 int Cliente::pedirFigura(const std::string& figura) {
-  
+  std::string request = this->formarRequest(figura);
+  this->socket->Write(request.c_str(), request.size() + 1);
+  std::string response;
+  char buffer[512];
+  int n;
+
+  while ((n = this->socket->Read(buffer, sizeof(buffer))) > 0) {
+    response.append(buffer, n);
+  }
+  if (response.empty()) return -1;
+  printf("Piezas para armar %s:\n", figura.c_str());
+  printf("%s\n", response.c_str());
   return 0;
 }
 
