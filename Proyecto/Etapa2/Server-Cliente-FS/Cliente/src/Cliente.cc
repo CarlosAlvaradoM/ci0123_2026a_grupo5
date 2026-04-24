@@ -30,10 +30,6 @@ void Cliente::run() {
   this->listarFiguras();
   while (true) {
     int eleccion = this->elegirFigura();
-    if (eleccion < 0 || eleccion > (int) this->listaFiguras.size()) {
-      fprintf(stderr, "Eleccion invalida, ingrese una de la lista");
-      continue;
-    }
     if (eleccion == (int) this->listaFiguras.size()) break;
     this->pedirFigura(this->listaFiguras[eleccion]);
   }
@@ -54,7 +50,22 @@ int Cliente::pedirFigura(const std::string& figura) {
 }
 
 int Cliente::elegirFigura() {
-  return 0;
+  int count = 0;
+  int eleccion = 0;
+  printf("Que figura desea consultar (ingrese el numero):\n");
+  for (const std::string& figura : this->listaFiguras) {
+    printf("%d. %s\n", ++count, figura.c_str());
+  }
+  printf("%d. Salir\n", ++count);
+  while (true) {
+    if (scanf("%d", &eleccion) <= 0
+        || eleccion < 1 || eleccion > (int) this->listaFiguras.size()) {
+      fprintf(stderr, "Opcion invalida, ingrese una de la lista");
+      continue;
+    }
+    break;
+  }
+  return eleccion - 1;
 }
 
 void Cliente::listarFiguras() {
@@ -99,6 +110,7 @@ void Cliente::datosConexion() {
       fprintf(stderr, "Opcion invalida, ingrese una de la lista");
       continue;
     }
+    break;
   }
   // Lo mismo para saber si usa SSL o no
   while (true) {
@@ -109,6 +121,7 @@ void Cliente::datosConexion() {
       fprintf(stderr, "Opcion invalida, ingrese una de la lista");
       continue;
     }
+    break;
   }
   bool IPv6 = (protocolo == 2);
   if (ssl == 1) {
