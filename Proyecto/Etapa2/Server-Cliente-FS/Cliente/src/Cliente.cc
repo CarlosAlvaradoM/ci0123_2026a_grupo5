@@ -69,4 +69,34 @@ std::string Cliente::formarRequest(const std::string& figura) {
 }
 
 void Cliente::datosConexion() {
+  int protocolo = 0;
+  int ssl = 0;
+  // Consultamos con que protocolo se va a conectar
+  while (true) {
+    printf("Que protocolo desea usar? (ingrese el numero):\n");
+    printf("1. IPv4:\n");
+    printf("2. IPv6:\n");
+    if (scanf("%d", protocolo) <= 0 || protocolo < 1 || protocolo > 2) {
+      fprintf(stderr, "Opcion invalida, ingrese una de la lista");
+      continue;
+    }
+  }
+  // Lo mismo para saber si usa SSL o no
+  while (true) {
+    printf("Desea usar SSL para conectarse? (ingrese el numero):\n");
+    printf("1. Si:\n");
+    printf("2. No:\n");
+    if (scanf("%d", ssl) <= 0 || ssl < 1 || ssl > 2) {
+      fprintf(stderr, "Opcion invalida, ingrese una de la lista");
+      continue;
+    }
+  }
+  bool IPv6 = (protocolo == 2);
+  if (ssl == 1) {
+    // TODO: añadir ssl cuando este disponible
+  } else {
+    this->socket = new Socket('s', IPv6);
+  }
+
+  this->socket->Connect(this->ServerIP.c_str(), this->port);
 }
