@@ -26,9 +26,13 @@ class Cliente {
   /// Socket para comunicarse con el server
   VSocket* socket;
 
+  std::vector<std::string> listaFiguras;
+
   int pedirFigura(const std::string&);
-  
-  std::vector<std::string> listarFiguras();
+
+  int elegirFigura();
+
+  void listarFiguras();
 
   std::string formarRequest(const std::string&);
 

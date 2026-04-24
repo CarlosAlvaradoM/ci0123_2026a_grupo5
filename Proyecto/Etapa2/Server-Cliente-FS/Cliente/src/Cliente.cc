@@ -18,11 +18,23 @@ Cliente::Cliente(const std::string& ServerIP, const int port)
 }
 
 void Cliente::run() {
-  this->datosConexion();
-  std::vector<std::string> figuras = this->listarFiguras();
+  try {
+    this->datosConexion();
+  }
+  catch(const std::exception& e) {
+    fprintf(stderr, "Error tratando de conectar con servidor: %s\n", e.what());
+    return;
+  }
+  
+  this->listarFiguras();
   while (true) {
-    this->pedirFigura("");
-    break;
+    int eleccion = this->elegirFigura();
+    if (eleccion < 0 || eleccion > this->listaFiguras.size()) {
+      fprintf(stderr, "Eleccion invalida, ingrese una de la lista");
+      continue;
+    }
+    if (eleccion == this->listaFiguras.size()) break;
+    this->pedirFigura(this->listaFiguras[eleccion]);
   }
   delete this->socket;
   this->socket = NULL;
@@ -39,8 +51,11 @@ int Cliente::pedirFigura(const std::string& figura) {
   return 0;
 }
 
-std::vector<std::string> Cliente::listarFiguras() {
-  return std::vector<std::string>();
+int Cliente::elegirFigura() {
+  return 0;
+}
+
+void Cliente::listarFiguras() {
 }
 
 /**
