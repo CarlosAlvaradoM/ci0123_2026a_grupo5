@@ -48,15 +48,19 @@ int Cliente::pedirFigura(const std::string& figura) {
   std::string request = this->formarRequest(figura);
   this->socket->Write(request.c_str(), request.size() + 1);
   std::string response;
-  char buffer[512];
-  int n;
+  char c;
 
-  while ((n = this->socket->Read(buffer, sizeof(buffer))) > 0) {
-    response.append(buffer, n);
+  while (this->socket->Read(&c, 1) > 0) {
+    if (c == '\0') break; 
+    response += c;
   }
   if (response.empty()) return -1;
+  size_t bodyPos = response.find("\r\n\r\n");
+  if (bodyPos == std::string::npos) {
+    return -1;
+  }
   printf("Piezas para armar %s:\n", figura.c_str());
-  printf("%s\n", response.c_str());
+  printf("%s\n", response.c_str() + bodyPos + 4);
   return 0;
 }
 
@@ -67,11 +71,11 @@ int Cliente::elegirFigura() {
   for (const std::string& figura : this->listaFiguras) {
     printf("%d. %s\n", ++count, figura.c_str());
   }
-  printf("%d. Salir\n", ++count);
+  printf("\e[0;31m%d. Salir del programa\e[0m\n", ++count);
   while (true) {
     if (scanf("%d", &eleccion) <= 0
-        || eleccion < 1 || eleccion > (int) this->listaFiguras.size()) {
-      fprintf(stderr, "Opcion invalida, ingrese una de la lista");
+        || eleccion < 1 || eleccion > (int) this->listaFiguras.size() + 1) {
+      fprintf(stderr, "Opcion invalida, ingrese una de la lista\n");
       continue;
     }
     break;
@@ -80,20 +84,27 @@ int Cliente::elegirFigura() {
 }
 
 void Cliente::listarFiguras() {
-  std::string request = this->formarRequest("listdata");
+  std::string request = this->formarRequest("");
   this->socket->Write(request.c_str(), request.size() + 1);
-  std::stringstream response;
-  char buffer[512];
-  int n;
+  std::string response;
+  char c;
 
-  while ((n = this->socket->Read(buffer, sizeof(buffer))) > 0) {
-    response.write(buffer, n);
+  while (this->socket->Read(&c, 1) > 0) {
+    if (c == '\0') break; 
+    response += c;
   }
 
-  response.seekg(0);
+  std::stringstream ss(response);
+
+  size_t bodyPos = response.find("\r\n\r\n");
+  if (bodyPos == std::string::npos) {
+    return;
+  }
+  ss.seekg(bodyPos + 4);
+
 
   std::string line;
-  while (std::getline(response, line, '\n')) {
+  while (std::getline(ss, line, '\n')) {
     if (line.empty()) continue;
     this->listaFiguras.push_back(line);
   }
@@ -104,9 +115,7 @@ void Cliente::listarFiguras() {
  * @param figura lo que se quiere solicitar
  */
 std::string Cliente::formarRequest(const std::string& figura) {
-  return "GET " 
-        + this->ServerIP + ":" + std::to_string(this->port) + "/" + figura 
-        + " HTTP/1.1\r\n\r\n";
+  return "GET /" + figura  + " HTTP/1.1\r\n\r\n";
 }
 
 void Cliente::datosConexion() {
@@ -115,10 +124,10 @@ void Cliente::datosConexion() {
   // Consultamos con que protocolo se va a conectar
   while (true) {
     printf("Que protocolo desea usar? (ingrese el numero):\n");
-    printf("1. IPv4:\n");
-    printf("2. IPv6:\n");
+    printf("1. IPv4\n");
+    printf("2. IPv6\n");
     if (scanf("%d", &protocolo) <= 0 || protocolo < 1 || protocolo > 2) {
-      fprintf(stderr, "Opcion invalida, ingrese una de la lista");
+      fprintf(stderr, "Opcion invalida, ingrese una de la lista\n");
       continue;
     }
     break;
@@ -126,10 +135,10 @@ void Cliente::datosConexion() {
   // Lo mismo para saber si usa SSL o no
   while (true) {
     printf("Desea usar SSL para conectarse? (ingrese el numero):\n");
-    printf("1. Si:\n");
-    printf("2. No:\n");
+    printf("1. Si\n");
+    printf("2. No\n");
     if (scanf("%d", &ssl) <= 0 || ssl < 1 || ssl > 2) {
-      fprintf(stderr, "Opcion invalida, ingrese una de la lista");
+      fprintf(stderr, "Opcion invalida, ingrese una de la lista\n");
       continue;
     }
     break;

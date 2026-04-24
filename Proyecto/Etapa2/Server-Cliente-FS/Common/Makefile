@@ -41,6 +41,7 @@ $(BIN):
 
 clean:
 	rm -rf $(BUILD) $(BIN)
+	make clean -C $(SOCKETDIR)
 
 run:
 	./$(BIN)/$(APPNAME)

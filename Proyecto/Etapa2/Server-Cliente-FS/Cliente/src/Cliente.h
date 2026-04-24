@@ -13,7 +13,7 @@
 class Cliente {
  public:
   Cliente() = delete;
-  explicit Cliente(const std::string&, const int);
+  Cliente(const std::string&, const int);
   ~Cliente() = default;
 
   void run();
