@@ -47,7 +47,7 @@ std::string leerFigura(const char* nombreArchivo, const char* nombreFigura) {
     resultado += nombreFigura;
     resultado += "\n----------------------------------------\n";
     
-    short bloqueActual = inodo.primerBloque;
+    unsigned short bloqueActual = inodo.primerBloque;
     int bytesLeidos = 0;
     int contadorBloques = 0;
     
@@ -147,7 +147,6 @@ void escribirStringEnBloquesLibres(const char* nombreArchivo, const char* nombre
     
     // Escribir los datos en los bloques enlazados
     int bytesEscritos = 0;
-    int bloqueActual = 0;
     
     for (int i = 0; i < bloquesNecesarios; i++) {
         BloqueDatos bloque;
@@ -178,7 +177,6 @@ void escribirStringEnBloquesLibres(const char* nombreArchivo, const char* nombre
         bitmap[byteIndex] |= (1 << bitIndex);
         
         bytesEscritos += bytesEnEsteBloque;
-        bloqueActual = bloquesLibres[i];
     }
     
     // Guardar bitmap actualizado
