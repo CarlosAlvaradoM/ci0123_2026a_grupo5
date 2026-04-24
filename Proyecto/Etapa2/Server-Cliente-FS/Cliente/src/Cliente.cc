@@ -5,6 +5,7 @@
 #include <cctype>
 #include <vector>
 #include <stdexcept>
+#include <sstream>
 
 #include "Cliente.h"
 #include "Socket.h"
@@ -29,13 +30,14 @@ void Cliente::run() {
   this->listarFiguras();
   while (true) {
     int eleccion = this->elegirFigura();
-    if (eleccion < 0 || eleccion > this->listaFiguras.size()) {
+    if (eleccion < 0 || eleccion > (int) this->listaFiguras.size()) {
       fprintf(stderr, "Eleccion invalida, ingrese una de la lista");
       continue;
     }
-    if (eleccion == this->listaFiguras.size()) break;
+    if (eleccion == (int) this->listaFiguras.size()) break;
     this->pedirFigura(this->listaFiguras[eleccion]);
   }
+  this->listaFiguras.clear();
   delete this->socket;
   this->socket = NULL;
 }
@@ -56,6 +58,23 @@ int Cliente::elegirFigura() {
 }
 
 void Cliente::listarFiguras() {
+  std::string request = this->formarRequest("listdata");
+  this->socket->Write(request.c_str(), request.size() + 1);
+  std::stringstream response;
+  char buffer[512];
+  int n;
+
+  while ((n = this->socket->Read(buffer, sizeof(buffer))) > 0) {
+    response.write(buffer, n);
+  }
+
+  response.seekg(0);
+
+  std::string line;
+  while (std::getline(response, line, '\n')) {
+    if (line.empty()) continue;
+    this->listaFiguras.push_back(line);
+  }
 }
 
 /**
@@ -76,7 +95,7 @@ void Cliente::datosConexion() {
     printf("Que protocolo desea usar? (ingrese el numero):\n");
     printf("1. IPv4:\n");
     printf("2. IPv6:\n");
-    if (scanf("%d", protocolo) <= 0 || protocolo < 1 || protocolo > 2) {
+    if (scanf("%d", &protocolo) <= 0 || protocolo < 1 || protocolo > 2) {
       fprintf(stderr, "Opcion invalida, ingrese una de la lista");
       continue;
     }
@@ -86,7 +105,7 @@ void Cliente::datosConexion() {
     printf("Desea usar SSL para conectarse? (ingrese el numero):\n");
     printf("1. Si:\n");
     printf("2. No:\n");
-    if (scanf("%d", ssl) <= 0 || ssl < 1 || ssl > 2) {
+    if (scanf("%d", &ssl) <= 0 || ssl < 1 || ssl > 2) {
       fprintf(stderr, "Opcion invalida, ingrese una de la lista");
       continue;
     }

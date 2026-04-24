@@ -3,7 +3,8 @@
 #include "Cliente.h"
 
 int main(int argc, char* argv[]) {
-  Cliente c("os.ecci.ucr.ac.cr");
+  // Cliente c("os.ecci.ucr.ac.cr");
 
-  return c.pedirFigura();
+  // return c.pedirFigura();
+  return 0;
 }
