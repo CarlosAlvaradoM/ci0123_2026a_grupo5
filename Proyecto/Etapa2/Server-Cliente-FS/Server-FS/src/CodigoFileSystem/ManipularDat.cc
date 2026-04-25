@@ -226,7 +226,6 @@ std::string ListData(const char* nombreArchivo) {
     }
 
     Inodo inodo;
-    bool primero = true;
 
     // Recorrer los 16 inodos en el Bloque 1 (posicion 256)
     for (int i = 0; i < 16; i++) {
@@ -235,11 +234,8 @@ std::string ListData(const char* nombreArchivo) {
         
         // Si el inodo está marcado como activo (1)
         if (inodo.activo == 1) {
-            if (!primero) {
-                listaNombres += ", "; // Separador
-            }
-            listaNombres += inodo.nombre;
-            primero = false;
+
+            listaNombres += std::string(inodo.nombre) + "\n";
         }
     }
 
