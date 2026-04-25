@@ -47,7 +47,8 @@ int main(int argc, char **argv) {
    VSocket *s1, *s2;
    int childpid;
 
-   s1 = new Socket('s');
+   bool IPv6 = true;
+   s1 = new Socket('s' , IPv6);
    s1->Bind(PORT);
    s1->MarkPassive(5);
 
