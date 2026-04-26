@@ -6,7 +6,9 @@
 
 int main(int argc, char* argv[]) {
   if (argc > 2) {
-    Cliente c(argv[1], std::atoi(argv[2]));
+    int port = std::atoi(argv[2]);
+    if (port == 0) return -1;
+    Cliente c(argv[1], port);
     c.run();
   } else 
   return 0;
