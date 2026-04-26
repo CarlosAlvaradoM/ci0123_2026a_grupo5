@@ -10,6 +10,10 @@
 #include "Cliente.h"
 #include "Socket.h"
 
+#define LIMPIAR_INPUT() \
+  int c; \
+  while ((c = getchar()) != '\n' && c != EOF)
+
 /**
  * @brief Constructor por argumentos
  */
@@ -26,16 +30,24 @@ void Cliente::run() {
     fprintf(stderr, "Error tratando de conectar con servidor: %s\n", e.what());
     return;
   }
+
+  printf("Conexión exitosa con el servidor %s\n", this->ServerIP.c_str());
   
   this->listarFiguras();
-  while (true) {
-    int eleccion = this->elegirFigura();
-    if (eleccion == (int) this->listaFiguras.size()) break;
-    this->pedirFigura(this->listaFiguras[eleccion]);
+  if (this->listaFiguras.empty()) {
+    fprintf(stderr, "Error, el servidor no tiene ninguna figura\n");
+  } else {
+    while (true) {
+      int eleccion = this->elegirFigura();
+      if (eleccion == (int) this->listaFiguras.size()) break;
+      if (this->pedirFigura(this->listaFiguras[eleccion]) == -1) {
+        fprintf(stderr, "Error, el servidor ya no contiene dicha figura\n");
+      }
+    }
+    this->listaFiguras.clear();
+    delete this->socket;
+    this->socket = NULL;
   }
-  this->listaFiguras.clear();
-  delete this->socket;
-  this->socket = NULL;
 }
 
 /**
@@ -57,10 +69,12 @@ int Cliente::pedirFigura(const std::string& figura) {
   if (response.empty()) return -1;
   size_t bodyPos = response.find("\r\n\r\n");
   if (bodyPos == std::string::npos) {
-    return -1;
-  }
+    // No hay estructura HTTP, Se asume que el body llega desde el inicio de la
+    // respuesta
+    bodyPos = 0;
+  } else bodyPos += 4;
   printf("Piezas para armar %s:\n", figura.c_str());
-  printf("%s\n", response.c_str() + bodyPos + 4);
+  printf("%s\n", response.c_str() + bodyPos);
   return 0;
 }
 
@@ -76,6 +90,7 @@ int Cliente::elegirFigura() {
     if (scanf("%d", &eleccion) <= 0
         || eleccion < 1 || eleccion > (int) this->listaFiguras.size() + 1) {
       fprintf(stderr, "Opcion invalida, ingrese una de la lista\n");
+      LIMPIAR_INPUT();
       continue;
     }
     break;
@@ -98,15 +113,15 @@ void Cliente::listarFiguras() {
 
   size_t bodyPos = response.find("\r\n\r\n");
   if (bodyPos == std::string::npos) {
-    return;
+    bodyPos = 0;
+  } else {
+    bodyPos += 4;
   }
-  ss.seekg(bodyPos + 4);
-
-
-  std::string line;
-  while (std::getline(ss, line, '\n')) {
-    if (line.empty()) continue;
-    this->listaFiguras.push_back(line);
+  size_t comaPos = 0;
+  while ((comaPos = response.find('\n', bodyPos)) != std::string::npos) {
+    std::string figure = response.substr(bodyPos, comaPos - bodyPos);
+    this->listaFiguras.push_back(figure);
+    bodyPos = comaPos + 1;
   }
 }
 
@@ -126,8 +141,10 @@ void Cliente::datosConexion() {
     printf("Que protocolo desea usar? (ingrese el numero):\n");
     printf("1. IPv4\n");
     printf("2. IPv6\n");
-    if (scanf("%d", &protocolo) <= 0 || protocolo < 1 || protocolo > 2) {
+    if (scanf("%d", &protocolo) <= 0 || protocolo > 2) {
       fprintf(stderr, "Opcion invalida, ingrese una de la lista\n");
+      // En caso de que quede algun caracter invalido, se limpia la entrada estandar
+      LIMPIAR_INPUT();
       continue;
     }
     break;
@@ -137,8 +154,9 @@ void Cliente::datosConexion() {
     printf("Desea usar SSL para conectarse? (ingrese el numero):\n");
     printf("1. Si\n");
     printf("2. No\n");
-    if (scanf("%d", &ssl) <= 0 || ssl < 1 || ssl > 2) {
+    if (scanf("%d", &ssl) <= 0 || ssl > 2) {
       fprintf(stderr, "Opcion invalida, ingrese una de la lista\n");
+      LIMPIAR_INPUT();
       continue;
     }
     break;
