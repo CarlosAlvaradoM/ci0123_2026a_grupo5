@@ -146,10 +146,19 @@ make
 
 ```bash
 cd Server-FS/bin
-./server.out
+./server.out <IPv4 o IPv6> <SSL o NO_SSL>
+```
+**Parámetros**:
+- `<IPv4 o IPv6>`: Elegir el tipo de IP.
+- `<SSL o NO_SSL>`: Elegir si se quiere con SSL o sin SSL.
+
+**Ejemplo**:
+```bash
+./server.out IPv4 SSL
+./server.out IPv6 NO_SSL
 ```
 
-El servidor comenzará a escuchar en el puerto 2026 en todas las interfaces (IPv4 e IPv6).
+El servidor comenzará a escuchar en el puerto 2026 en todas las interfaces.
 
 ### 2. Ejecutar el cliente (en otra terminal)
 
