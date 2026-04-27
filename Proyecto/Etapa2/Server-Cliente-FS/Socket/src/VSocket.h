@@ -13,12 +13,14 @@
 
 #ifndef VSocket_h
 #define VSocket_h
+
+#include <cstddef>
  
 class VSocket {
    public:
        void Init( char, bool = false );
        void Init( int );
-      ~VSocket();
+      virtual ~VSocket() = 0;
 
       void Close();
       int TryToConnect( const char *, int );

@@ -105,25 +105,33 @@ void VSocket::Close(){
   * @param      int port: process address, example 80
   *
  **/
-int VSocket::TryToConnect( const char * hostip, int port ) {
+int VSocket::TryToConnect(const char *hostip, int port) {
 
-   struct sockaddr_in addr;
-   memset(&addr, 0, sizeof(addr));
+   if (this->IPv6) {
+      struct sockaddr_in6 addr6;
+      memset(&addr6, 0, sizeof(addr6));
 
-   addr.sin_family = AF_INET;
-   addr.sin_port = htons(port);
+      addr6.sin6_family = AF_INET6;
+      addr6.sin6_port = htons(port);
 
-   if ( inet_pton(AF_INET, hostip, &addr.sin_addr) <= 0 ) {
-      throw std::runtime_error("VSocket::TryToConnect inet_pton()");
+      if (inet_pton(AF_INET6, hostip, &addr6.sin6_addr) <= 0) {
+         throw std::runtime_error("IPv6 inet_pton()");
+      }
+
+      return connect(this->sockId, (struct sockaddr*)&addr6, sizeof(addr6));
+   } else {
+      struct sockaddr_in addr;
+      memset(&addr, 0, sizeof(addr));
+
+      addr.sin_family = AF_INET;
+      addr.sin_port = htons(port);
+
+      if (inet_pton(AF_INET, hostip, &addr.sin_addr) <= 0) {
+         throw std::runtime_error("IPv4 inet_pton()");
+      }
+
+      return connect(this->sockId, (struct sockaddr*)&addr, sizeof(addr));
    }
-
-   int st = connect(this->sockId, (struct sockaddr*)&addr, sizeof(addr));
-
-   if ( st < 0 ) {
-      throw std::runtime_error("VSocket::TryToConnect connect()");
-   }
-
-   return st;
 }
 
 
@@ -152,24 +160,29 @@ int VSocket::TryToConnect( const char *host, const char *service ) {
   *  Links the calling process to a service at port
   *
  **/
-int VSocket::Bind( int port ) {
+int VSocket::Bind(int port) {
 
    this->port = port;
 
-   struct sockaddr_in addr;
-   memset(&addr, 0, sizeof(addr));
+   if (this->IPv6) {
+      struct sockaddr_in6 addr6;
+      memset(&addr6, 0, sizeof(addr6));
 
-   addr.sin_family = AF_INET;
-   addr.sin_addr.s_addr = INADDR_ANY;
-   addr.sin_port = htons(port);
+      addr6.sin6_family = AF_INET6;
+      addr6.sin6_addr = in6addr_any;
+      addr6.sin6_port = htons(port);
 
-   int st = bind(this->sockId, (struct sockaddr*)&addr, sizeof(addr));
+      return bind(this->sockId, (struct sockaddr*)&addr6, sizeof(addr6));
+   } else {
+      struct sockaddr_in addr;
+      memset(&addr, 0, sizeof(addr));
 
-   if ( st < 0 ) {
-      throw std::runtime_error("VSocket::Bind()");
+      addr.sin_family = AF_INET;
+      addr.sin_addr.s_addr = INADDR_ANY;
+      addr.sin_port = htons(port);
+
+      return bind(this->sockId, (struct sockaddr*)&addr, sizeof(addr));
    }
-
-   return st;
 }
 
 
