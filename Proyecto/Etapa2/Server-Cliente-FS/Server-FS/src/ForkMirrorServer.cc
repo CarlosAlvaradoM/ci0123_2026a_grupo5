@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <string>
 #include <algorithm>
@@ -17,6 +18,7 @@
 #include <fstream>
 
 #include "Socket.h"
+#include "SSLSocket.h"
 #include "CodigoFileSystem/ManipularDat.h"
 #include "CodigoFileSystem/CrearDat.h"
 #include "CodigoFileSystem/BitMap.h"
@@ -32,8 +34,19 @@ bool existeArchivo(const std::string &nombre);
 
 int main(int argc, char **argv) {
 
-   (void)argc;
-   (void)argv;
+   // Evitar procesos zombie
+   signal(SIGCHLD, SIG_IGN);
+
+   // Validar argumentos
+   if (argc < 3) {
+      printf("Uso: %s <IPv4 o IPv6> <SSL o NO_SSL>\n", argv[0]);
+      exit(1);
+   }
+
+   bool IPv6 = (strcmp(argv[1], "IPv6") == 0);
+   bool ssl  = (strcmp(argv[2], "SSL") == 0);
+
+   printf("Iniciando server\n");
 
    // Inicializar FS si no existe
    if (!existeArchivo(RUTA_FS)) {
@@ -44,16 +57,38 @@ int main(int argc, char **argv) {
       ponerFiguras(RUTA_FS);
    }
 
-   VSocket *s1, *s2;
+   VSocket *s1 = nullptr;
+   VSocket *s2 = nullptr;
    int childpid;
 
-   bool IPv6 = true;
-   s1 = new Socket('s' , IPv6);
+   // Crear socket
+   try {
+      if (ssl) {
+         printf("Usando SSL\n");
+         s1 = new SSLSocket("../ci0123.pem", "../key0123.pem", IPv6);
+      } else {
+         printf("Usando Socket normal\n");
+         s1 = new Socket('s', IPv6);
+      }
+   } catch (const std::exception& e) {
+      fprintf(stderr, "Error creando socket: %s\n", e.what());
+      exit(1);
+   }
+
    s1->Bind(PORT);
    s1->MarkPassive(5);
 
+   printf("Servidor en puerto %d\n", PORT);
+
    for (;;) {
-      s2 = s1->AcceptConnection();
+
+      // Aceptar conexión con protección
+      try {
+         s2 = s1->AcceptConnection();
+      } catch (const std::exception& e) {
+         fprintf(stderr, "Error aceptando conexion: %s\n", e.what());
+         continue;
+      }
 
       childpid = fork();
 
@@ -62,73 +97,78 @@ int main(int argc, char **argv) {
       }
       // Proceso hijo
       else if (childpid == 0) {
+
+         printf("Proceso hijo atendiendo cliente\n");
          s1->Close();
 
-         char buffer[BUFSIZE];
-         int bytes;
-         std::string request;
+         try {
+            char buffer[BUFSIZE];
+            int bytes;
+            std::string request;
 
-         while (true) {
-            request.clear();
+            while (true) {
 
-            // Leer request completo
-            while ((bytes = s2->Read(buffer, BUFSIZE)) > 0) {
-               request.append(buffer, bytes);
+               request.clear();
 
-               if (request.find("\r\n\r\n") != std::string::npos) {
-                  break;
+               // Leer request completo
+               while ((bytes = s2->Read(buffer, BUFSIZE)) > 0) {
+                  request.append(buffer, bytes);
+
+                  if (request.find("\r\n\r\n") != std::string::npos) {
+                     break;
+                  }
                }
-            }
 
-            // Cliente cerro conexion
-            if (request.empty()) break;
+               // Cliente cerró conexión
+               if (request.empty()) break;
 
-            printf("Request recibido:\n%s\n", request.c_str());
+               printf("Request recibido:\n%s\n", request.c_str());
 
-            // Parser 
-            std::string metodo;
-            std::string ruta;
+               // Parsear request
+               std::string metodo, ruta;
+               size_t endLine = request.find("\r\n");
+               std::string firstLine = request.substr(0, endLine);
 
-            size_t endLine = request.find("\r\n");
-            std::string firstLine = request.substr(0, endLine);
+               std::stringstream ss(firstLine);
+               ss >> metodo >> ruta;
 
-            std::stringstream ss(firstLine);
-            ss >> metodo >> ruta;
+               std::transform(metodo.begin(), metodo.end(), metodo.begin(), ::toupper);
 
-            std::transform(metodo.begin(), metodo.end(), metodo.begin(), ::toupper);
+               std::string respuesta;
 
-            // Logica
-            std::string respuesta;
-
-            if (metodo == "GET") {
-               if (ruta == "/") {
-                  respuesta = ListData(RUTA_FS);
+               // Lógica
+               if (metodo == "GET") {
+                  if (ruta == "/") {
+                     respuesta = ListData(RUTA_FS);
+                  } else {
+                     std::string nombreFigura = ruta.substr(1);
+                     respuesta = leerFigura(RUTA_FS, nombreFigura.c_str());
+                  }
                } else {
-                  // Quitar el /
-                  std::string nombreFigura = ruta.substr(1);
-                  respuesta = leerFigura(RUTA_FS, nombreFigura.c_str());
+                  respuesta = "Metodo no soportado";
                }
-            } else {
-               respuesta = "Metodo no soportado";
+
+               // Construir respuesta HTTP
+               std::string httpResponse;
+
+               if (respuesta.find("no encontrada") != std::string::npos) {
+                  httpResponse =
+                     "HTTP/1.1 404 Not Found\r\n"
+                     "Content-Type: text/plain\r\n\r\n" +
+                     respuesta;
+               } else {
+                  httpResponse =
+                     "HTTP/1.1 200 OK\r\n"
+                     "Content-Type: text/plain\r\n\r\n" +
+                     respuesta;
+               }
+
+               // Enviar respuesta
+               s2->Write(httpResponse.c_str(), httpResponse.size() + 1);
             }
 
-            // Respuesta HTTP
-            std::string httpResponse;
-
-            if (respuesta.find("no encontrada") != std::string::npos) {
-               httpResponse =
-                  "HTTP/1.1 404 Not Found\r\n"
-                  "Content-Type: text/plain\r\n\r\n" +
-                  respuesta;
-            } else {
-               httpResponse =
-                  "HTTP/1.1 200 OK\r\n"
-                  "Content-Type: text/plain\r\n\r\n" +
-                  respuesta;
-            }
-
-            // Enviar respuesta (incluye '\0' para cliente)
-            s2->Write(httpResponse.c_str(), httpResponse.size() + 1);
+         } catch (const std::exception& e) {
+            fprintf(stderr, "Error en comunicacion con cliente: %s\n", e.what());
          }
 
          s2->Close();

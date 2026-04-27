@@ -1,14 +1,15 @@
 // Copyright 2026a Equipo 1 CI-0123. ECCI-UCR. CC BY 4.0
 
+#include <cctype>
 #include <cstdio>
 #include <cstring>
-#include <cctype>
 #include <vector>
 #include <stdexcept>
 #include <sstream>
 
 #include "Cliente.h"
 #include "Socket.h"
+#include "SSLSocket.h"
 
 #define LIMPIAR_INPUT() \
   int c; \
@@ -29,22 +30,27 @@ void Cliente::run() {
   }
 
   printf("Conexión exitosa con el servidor %s\n", this->ServerIP.c_str());
-  
-  this->listarFiguras();
-  if (this->listaFiguras.empty()) {
-    fprintf(stderr, "Error, el servidor no tiene ninguna figura\n");
-  } else {
-    while (true) {
-      int eleccion = this->elegirFigura();
-      if (eleccion == (int) this->listaFiguras.size()) break;
-      if (this->pedirFigura(this->listaFiguras[eleccion]) == -1) {
-        fprintf(stderr, "Error, el servidor ya no contiene dicha figura\n");
+  try {
+    /* code */
+    this->listarFiguras();
+    if (this->listaFiguras.empty()) {
+      fprintf(stderr, "Error, el servidor no tiene ninguna figura\n");
+    } else {
+      while (true) {
+        int eleccion = this->elegirFigura();
+        if (eleccion == (int) this->listaFiguras.size()) break;
+        if (this->pedirFigura(this->listaFiguras[eleccion]) == -1) {
+          fprintf(stderr, "Error, el servidor ya no contiene dicha figura\n");
+        }
       }
     }
-    this->listaFiguras.clear();
-    delete this->socket;
-    this->socket = NULL;
   }
+  catch(const std::exception& e) {
+    fprintf(stderr, "Error tratando de comunicarse con el servidor: %s\n", e.what());
+  }
+  this->listaFiguras.clear();
+  delete this->socket;
+  this->socket = NULL;
 }
 
 int Cliente::pedirFigura(const std::string& figura) {
@@ -150,7 +156,7 @@ void Cliente::datosConexion() {
   }
   bool IPv6 = (protocolo == 2);
   if (ssl == 1) {
-    // TODO: añadir ssl cuando este disponible
+    this->socket = new SSLSocket(IPv6);
   } else {
     this->socket = new Socket('s', IPv6);
   }

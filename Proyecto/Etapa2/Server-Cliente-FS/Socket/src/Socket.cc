@@ -12,6 +12,7 @@
  **/
 
 #include <sys/socket.h>         // sockaddr_in
+#include <sys/select.h>          // select
 #include <arpa/inet.h>          // ntohs
 #include <unistd.h>		// write, read
 #include <cstring>
@@ -93,7 +94,24 @@ int Socket::Connect( const char *host, const char *service ) {
  **/
 size_t Socket::Read( void * buffer, size_t size ) {
 
-   int st = read(this->sockId, buffer, size);
+   fd_set readfds;
+   struct timeval tv;
+
+   FD_ZERO(&readfds);
+   FD_SET(this->sockId, &readfds);
+
+   tv.tv_sec = 10;
+   tv.tv_usec = 0;
+
+   int st = select(this->sockId + 1, &readfds, NULL, NULL, &tv);
+
+   if (st == -1) {
+      throw std::runtime_error("Socket::Read, select");
+   } else if (st == 0) {
+      throw std::runtime_error("Socket::Read, timeout");
+   }
+
+   st = read(this->sockId, buffer, size);
 
    if ( st < 0 ) {
       throw std::runtime_error("Socket::Read()");
