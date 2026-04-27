@@ -1,18 +1,6 @@
-/**
-  *  Universidad de Costa Rica
-  *  ECCI
-  *  CI0123 Proyecto integrador de redes y sistemas operativos
-  *  2026-i
-  *  Grupos: 2 y 3
-  *
-  *  ******   Socket class implementation
-  *
-  * (Fedora version)
-  *
- **/
+// Copyright 2026a Equipo 1 CI-0123. ECCI-UCR. CC BY 4.0
 
 #include <sys/socket.h>         // sockaddr_in
-#include <sys/select.h>          // select
 #include <arpa/inet.h>          // ntohs
 #include <unistd.h>		// write, read
 #include <cstring>
@@ -21,19 +9,9 @@
 
 #include "Socket.h"		// Derived class
 
-/**
-  *  Class constructor
-  *     use Unix socket system call
-  *
-  *  @param     char t: socket type to define
-  *     's' for stream
-  *     'd' for datagram
-  *  @param     bool ipv6: if we need a IPv6 socket
-  *
- **/
 Socket::Socket( char t, bool IPv6 ){
 
-   this->Init( t, IPv6 );      // Call base class constructor
+   this->Init( t, IPv6 );
 
 }
 
@@ -43,25 +21,11 @@ Socket::Socket( int id ) {
 }
 
 
-/**
-  *  Class destructor
-  *
-  *  @param     int id: socket descriptor
-  *
- **/
 Socket::~Socket() {
 
 }
 
 
-/**
-  * Connect method
-  *   use "TryToConnect" in base class
-  *
-  * @param      char * host: host address in dot notation, example "10.1.166.62"
-  * @param      int port: process address, example 80
-  *
- **/
 int Socket::Connect( const char * hostip, int port ) {
 
    return this->TryToConnect( hostip, port );
@@ -69,14 +33,6 @@ int Socket::Connect( const char * hostip, int port ) {
 }
 
 
-/**
-  * Connect method
-  *   use "TryToConnect" in base class
-  *
-  * @param      char * host: host address in dns notation, example "os.ecci.ucr.ac.cr"
-  * @param      char * service: process address, example "http"
-  *
- **/
 int Socket::Connect( const char *host, const char *service ) {
 
    return this->TryToConnect( host, service );
@@ -84,34 +40,9 @@ int Socket::Connect( const char *host, const char *service ) {
 }
 
 
-/**
-  * Read method
-  *   use "read" Unix system call (man 3 read)
-  *
-  * @param      void * buffer: buffer to store data read from socket
-  * @param      int size: buffer capacity, read will stop if buffer is full
-  *
- **/
 size_t Socket::Read( void * buffer, size_t size ) {
 
-   fd_set readfds;
-   struct timeval tv;
-
-   FD_ZERO(&readfds);
-   FD_SET(this->sockId, &readfds);
-
-   tv.tv_sec = 10;
-   tv.tv_usec = 0;
-
-   int st = select(this->sockId + 1, &readfds, NULL, NULL, &tv);
-
-   if (st == -1) {
-      throw std::runtime_error("Socket::Read, select");
-   } else if (st == 0) {
-      throw std::runtime_error("Socket::Read, timeout");
-   }
-
-   st = read(this->sockId, buffer, size);
+   int st = read(this->sockId, buffer, size);
 
    if ( st < 0 ) {
       throw std::runtime_error("Socket::Read()");
@@ -121,14 +52,6 @@ size_t Socket::Read( void * buffer, size_t size ) {
 }
 
 
-/**
-  * Write method
-  *   use "write" Unix system call (man 3 write)
-  *
-  * @param      void * buffer: buffer to store data write to socket
-  * @param      size_t size: buffer capacity, number of bytes to write
-  *
- **/
 size_t Socket::Write( const void * buffer, size_t size ) {
 
    int st = write(this->sockId, buffer, size);
@@ -141,13 +64,6 @@ size_t Socket::Write( const void * buffer, size_t size ) {
 }
 
 
-/**
-  * Write method
-  *   use "write" Unix system call (man 3 write)
-  *
-  * @param      char * text: text to write to socket
-  *
- **/
 size_t Socket::Write( const char * text ) {
 
    int st = write(this->sockId, text, strlen(text));
@@ -160,15 +76,6 @@ size_t Socket::Write( const char * text ) {
 }
 
 
-/**
-  * AcceptConnection method
-  *    use base class to accept connections
-  *
-  *  @returns   a new class instance
-  *
-  *  Waits for a new connection to service (TCP mode: stream)
-  *
- **/
 VSocket * Socket::AcceptConnection(){
    int id;
    VSocket * peer;
