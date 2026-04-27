@@ -25,16 +25,21 @@ Servidor::Servidor(Cola& entrada, Cola& salida)
 }
 
 void Servidor::matar() {
+    // exchange() devuelve el valor anterior; si ya era false alguien se nos adelantó
+    // y no hay que hacer nada más
     if (!vivo.exchange(false)) return;
 
     logger("SERVIDOR", "P/K/ - Anunciando muerte al Tenedor");
 
+    // P/K/ en la cola de salida despierta al hilo escucha_servidor del Tenedor
     Mensaje kill_salida;
     kill_salida.id_cliente = -1;
     kill_salida.contenido  = "P/K/";
     kill_salida.req_id     = "kill";
     salida.push(kill_salida);
 
+    // P/K/ en la cola de entrada despierta al propio bucle de correr()
+    // para que el servidor no quede bloqueado esperando la próxima solicitud
     Mensaje kill_entrada;
     kill_entrada.id_cliente = -1;
     kill_entrada.contenido  = "P/K/";
@@ -53,6 +58,7 @@ void Servidor::correr() {
             break;
         }
 
+        // P/Q/ sin id_cliente real significa cierre ordenado pedido por el Tenedor
         if (m.contenido == "P/Q/") {
             logger("SERVIDOR", "P/Q/ - Cierre ordenado, terminando");
             Mensaje resp;
@@ -71,6 +77,7 @@ void Servidor::correr() {
         respuesta.req_id     = m.req_id;
 
         if (m.contenido == "P/R/dir") {
+            // Armar la lista de figuras como "P/D/figura1,figura2,..."
             string lista = "P/D/";
             bool primero = true;
             for (auto& par : figuras) {
@@ -84,6 +91,7 @@ void Servidor::correr() {
         } else if (m.contenido.size() > 4 && m.contenido.substr(0, 4) == "P/G/") {
             string figura = m.contenido.substr(4);
             if (figuras.count(figura)) {
+                // Armar la lista de piezas como "P/D/pieza1,pieza2,..."
                 string piezas = "P/D/";
                 bool primero = true;
                 for (auto& pieza : figuras[figura]) {
