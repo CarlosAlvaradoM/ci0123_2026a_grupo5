@@ -15,7 +15,6 @@ using namespace std;
 mutex console_mtx;
 atomic<int> req_counter(0);
 
-// Todos los componentes llaman esto en lugar de cout directo
 void logger(const string& componente, const string& mensaje) {
     lock_guard<mutex> lock(console_mtx);
     cout << "[" << componente << "]: " << mensaje << "\n";
@@ -27,8 +26,9 @@ int main() {
     cout << "=== Simulacion Protocolo Grupal (Etapa 2) ===\n\n";
     cout << "Escenario: flujo normal + P/K/ (muerte del servidor)\n\n";
 
-    // Cada cliente tiene su propia cola de solicitudes hacia el Tenedor
-    // para evitar el filtrado por id y el busy-wait que causa bad_alloc
+    // Cada cliente tiene su propia cola de entrada al Tenedor para que
+    // el Tenedor pueda atenderlos con un hilo dedicado sin necesidad de
+    // filtrar mensajes por id_cliente
     vector<Cola*> colas_entrada_tenedor;
     for (int i = 0; i < NUM_CLIENTES; i++) {
         colas_entrada_tenedor.push_back(new Cola());
@@ -38,8 +38,8 @@ int main() {
     Cola cola_tenedor_servidor;
     Cola cola_servidor_tenedor;
 
-    // Cada cliente tiene su propia cola de respuesta para que el Tenedor
-    // pueda responderle directamente sin que otro cliente lea su mensaje
+    // Cola de respuesta exclusiva por cliente; el Tenedor deposita aquí
+    // la respuesta que viene del Servidor, y el cliente la lee sin competencia
     vector<Cola*> colas_respuesta;
     for (int i = 0; i < NUM_CLIENTES; i++) {
         colas_respuesta.push_back(new Cola());
@@ -62,16 +62,16 @@ int main() {
         hilos_clientes.emplace_back(&Cliente::correr, clientes[i]);
     }
 
-    // Hilo aparte que mata al servidor después de 600ms para simular caída
+    // Hilo aparte que mata al servidor a los 600 ms para simular una caída
     // mientras algunos clientes todavía están en medio de su sesión
     thread hilo_kill([&srv]() {
         this_thread::sleep_for(chrono::milliseconds(600));
         srv.matar();
     });
 
-    // Esperar en orden: primero clientes, luego Tenedor, luego Servidor
-    // Si se hace al revés puede haber deadlock porque el Tenedor espera
-    // que todos los clientes terminen antes de cerrar
+    // El orden de join importa: si se espera primero al Tenedor o al Servidor
+    // puede haber deadlock porque el Tenedor no termina hasta que todos los
+    // clientes cierran sesión
     for (auto& h : hilos_clientes) h.join();
     hilo_tenedor.join();
     hilo_servidor.join();
