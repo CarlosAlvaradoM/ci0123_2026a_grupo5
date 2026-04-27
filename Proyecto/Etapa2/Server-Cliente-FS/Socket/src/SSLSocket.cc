@@ -198,9 +198,7 @@ int SSLSocket::Connect( const char * hostName, int port ) {
 
    st = SSL_connect(ssl);
    if ( 1 != st ) {
-      perror("Connect");
       SSL_get_error( ssl, st );
-      fprintf( stderr, "SSL_connect failed with SSL_get_error code %d\n", st );
       throw std::runtime_error("SSLSocket::Connect(const char *, int)");
    }
 
@@ -251,6 +249,25 @@ int SSLSocket::Connect( const char * host, const char * service ) {
  **/
 size_t SSLSocket::Read( void * buffer, size_t size ) {
    int st = -1;
+
+   fd_set readfds;
+   struct timeval tv;
+
+   FD_ZERO(&readfds);
+   FD_SET(this->sockId, &readfds);
+
+   tv.tv_sec = 10;
+   tv.tv_usec = 0;
+
+   if (SSL_pending((SSL*)this->BIO) <= 0) {
+      st = select(this->sockId + 1, &readfds, NULL, NULL, &tv);
+
+      if (st == -1) {
+         throw std::runtime_error("SSLSocket::Read, select");
+      } else if (st == 0) {
+         throw std::runtime_error("SSLSocket::Read, timeout");
+      }
+   }
 
    st = SSL_read( (SSL *) this->BIO, buffer, size);
 

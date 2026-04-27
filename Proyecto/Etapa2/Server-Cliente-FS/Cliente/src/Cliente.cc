@@ -1,8 +1,8 @@
 // Copyright 2026a Equipo 1 CI-0123. ECCI-UCR. CC BY 4.0
 
+#include <cctype>
 #include <cstdio>
 #include <cstring>
-#include <cctype>
 #include <vector>
 #include <stdexcept>
 #include <sstream>
