@@ -14,9 +14,6 @@
   int c; \
   while ((c = getchar()) != '\n' && c != EOF)
 
-/**
- * @brief Constructor por argumentos
- */
 Cliente::Cliente(const std::string& ServerIP, const int port)
   : ServerIP(ServerIP)
   , port(port) {
@@ -50,12 +47,6 @@ void Cliente::run() {
   }
 }
 
-/**
- * @brief Rutina para pedir las piezas para armar una figura e imprimir
- * la lista en la salida.
- * @param figura Nombre del archivo a pedir
- * @returns Un código de error. 0 en caso de éxito, -1 al contrario;
- */
 int Cliente::pedirFigura(const std::string& figura) {
   std::string request = this->formarRequest(figura);
   this->socket->Write(request.c_str(), request.size() + 1);
@@ -125,10 +116,6 @@ void Cliente::listarFiguras() {
   }
 }
 
-/**
- * @brief Metodo privado para armar el mensaje del request
- * @param figura lo que se quiere solicitar
- */
 std::string Cliente::formarRequest(const std::string& figura) {
   return "GET /" + figura  + " HTTP/1.1\r\n\r\n";
 }
