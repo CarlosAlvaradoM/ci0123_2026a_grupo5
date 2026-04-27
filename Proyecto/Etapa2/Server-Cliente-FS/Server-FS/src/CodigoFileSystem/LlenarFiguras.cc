@@ -1,20 +1,8 @@
-#include "CrearDat.h"
-#include "BitMap.h"
-#include "Inodos.h"
-#include "Bloques.h"
 #include "ManipularDat.h"
-#include <string>
-#include <iostream>
 
-int main() {
-    // Crear y formatear el disco
-    crearDat("figuras.dat");
-    convertirBloque0ABitmap("figuras.dat");
-    convertirBloque1AInodo("figuras.dat");
-    limpiarBloquesDesde2("figuras.dat");
-
+void ponerFiguras(const char* ruta){
     // Figura caballo OS
-    escribirStringEnBloquesLibres("figuras.dat", "caballo",
+    escribirStringEnBloquesLibres(ruta, "caballo",
                                   "1 brick 2x2 yellow\n"
                                   "4 brick 2x4 white\n"
                                   "2 brick 2x4 yellow\n"
@@ -25,7 +13,7 @@ int main() {
                                   "1 brick 2x2 white");
 
     // Figura elefante OS
-    escribirStringEnBloquesLibres("figuras.dat", "elefant",
+    escribirStringEnBloquesLibres(ruta, "elefant",
                                   "2 brick 2x2 black\n"
                                   "6 brick 2x2 grey\n"
                                   "5 brick 2x4 grey\n"
@@ -35,7 +23,7 @@ int main() {
                                   "1 plate 2x4 grey");
 
     // Figura jirafa OS
-    escribirStringEnBloquesLibres("figuras.dat", "jirafa",
+    escribirStringEnBloquesLibres(ruta, "jirafa",
                                   "4 brick 2x2 black\n"
                                   "4 brick 2x2 yellow\n"
                                   "6 brick 2x1 yellow\n"
@@ -48,19 +36,19 @@ int main() {
                                   "2 brick 1x1 eye yellow");
 
     // Figura ovejaBlanca OS
-    escribirStringEnBloquesLibres("figuras.dat", "ovejaB",
+    escribirStringEnBloquesLibres(ruta, "ovejaB",
                                   "3 brick 1x2 black\n"
                                   "2 brick 2x4 white\n"
                                   "1 brick 2x2 white");
 
     // Figura ovejaNegra OS
-    escribirStringEnBloquesLibres("figuras.dat", "ovejaN",
+    escribirStringEnBloquesLibres(ruta, "ovejaN",
                                   "3 brick 1x2 white\n"
                                   "2 brick 2x4 black\n"
                                   "1 brick 2x2 black");
 
     // Figura pato OS
-    escribirStringEnBloquesLibres("figuras.dat", "pato",
+    escribirStringEnBloquesLibres(ruta, "pato",
                                   "1 brick 2x2 slope orange\n"
                                   "2 brick 2x3 yellow\n"
                                   "2 brick 2x2 yellow\n"
@@ -69,7 +57,7 @@ int main() {
                                   "1 brick 2x4 slope orange");
 
     // Figura pez OS
-    escribirStringEnBloquesLibres("figuras.dat", "pez",
+    escribirStringEnBloquesLibres(ruta, "pez",
                                   "3 brick 2x4 yellow\n"
                                   "1 brick 2x3 yellow\n"
                                   "2 brick 1x1 yellow eye\n"
@@ -77,7 +65,7 @@ int main() {
                                   "4 brick 2x2 translucent red");
 
     // Figura con 754 bytes aproximadamente, requiere 3-4 bloques de 256 bytes
-    escribirStringEnBloquesLibres("figuras.dat", "gotica",
+    escribirStringEnBloquesLibres(ruta, "gotica",
                                   "12 brick 2x4 light_gray base\n"
                                   "8 brick 2x10 dark_gray foundation\n"
                                   "24 brick 1x2 light_gray main_wall\n"
@@ -109,33 +97,4 @@ int main() {
                                   "2 hinge_brick 1x2 light_gray transept\n"
                                   "1 baseplate 16x16 green landscape");
 
-    // Lectura
-    std::cout << "\nCabllo:\n";
-    leerFigura("figuras.dat", "caballo");
-
-    std::cout << "\nElefante:\n";
-    leerFigura("figuras.dat", "elefant");
-
-    std::cout << "\nJirafa:\n";
-    leerFigura("figuras.dat", "jirafa");
-
-    std::cout << "\nOveja Blanca:\n";
-    leerFigura("figuras.dat", "ovejaB");
-
-    std::cout << "\nOveja Negra:\n";
-    leerFigura("figuras.dat", "ovejaN");
-
-    std::cout << "\nPato:\n";
-    leerFigura("figuras.dat", "pato");
-
-    std::cout << "\nPez:\n";
-    leerFigura("figuras.dat", "pez");
-
-    std::cout << "\nGotica:\n";
-    leerFigura("figuras.dat", "gotica");
-
-    std::string nombres = ListData("figuras.dat");
-    std::cout << "Figuras en el disco: " << nombres << std::endl;
-
-    return 0;
 }

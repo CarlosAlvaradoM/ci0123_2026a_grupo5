@@ -3,26 +3,20 @@
  *  ECCI
  *  CI0123 Proyecto integrador de redes y sistemas operativos
  *  2026-i
- *  Grupos: 2 y 3
- *
- *   Socket client/server example
- *
- * (Fedora version)
- *
- **/
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <string.h> // memset
+#include <string.h>
 #include <unistd.h>
 
 #include <string>
 #include <algorithm>
-
+#include <sstream>
 #include <fstream>
 
-#include "Servidor-Cliente/Socket.h"
+#include "Socket.h"
 #include "CodigoFileSystem/ManipularDat.h"
 #include "CodigoFileSystem/CrearDat.h"
 #include "CodigoFileSystem/BitMap.h"
@@ -32,91 +26,121 @@
 
 #define PORT 2026
 #define BUFSIZE 512
-#define RUTA_FS "CodigoFileSystem/figuras.dat"
+#define RUTA_FS "../src/CodigoFileSystem/figuras.dat"
 
-bool existeArchivo(const std::string& nombre);
+bool existeArchivo(const std::string &nombre);
 
 int main(int argc, char **argv) {
 
-   // Verificar si el archivo figuras.dat existe
-   bool existeFiguras = existeArchivo(RUTA_FS);
+   (void)argc;
+   (void)argv;
 
-   // Crear o no archivo figuras.dat
-   if(!existeFiguras) {
-      // Llamar a funcion que formatea el disco
+   // Inicializar FS si no existe
+   if (!existeArchivo(RUTA_FS)) {
       crearDat(RUTA_FS);
       convertirBloque0ABitmap(RUTA_FS);
       convertirBloque1AInodo(RUTA_FS);
       limpiarBloquesDesde2(RUTA_FS);
-
-      // Llamar a funcion de poner las figuras en el disco
       ponerFiguras(RUTA_FS);
    }
 
    VSocket *s1, *s2;
    int childpid;
-   char a[BUFSIZE];
 
-   s1 = new Socket('s'); // Create a stream IPv4 socket
-
-   s1->Bind(PORT);     // Port to access this mirror server
-   s1->MarkPassive(5); // Set passive socket and backlog queue to 5 connections
+   bool IPv6 = true;
+   s1 = new Socket('s' , IPv6);
+   s1->Bind(PORT);
+   s1->MarkPassive(5);
 
    for (;;) {
-      s2 = s1->AcceptConnection(); // Wait for a new connection, connection info is in s2 variable
-      childpid = fork();           // Create a child to serve the request
+      s2 = s1->AcceptConnection();
+
+      childpid = fork();
+
       if (childpid < 0) {
          perror("server: fork error");
       }
-      else {
-         if (0 == childpid) {               // child code
-            s1->Close(); // Close original socket "s1" in child
-            memset(a, 0, BUFSIZE);
-            s2->Read(a, BUFSIZE);
+      // Proceso hijo
+      else if (childpid == 0) {
+         s1->Close();
 
-            // Pasar a string
-            std::string request(a);
-            // Respuesta de FS
-            std::string respuesta = "";
+         char buffer[BUFSIZE];
+         int bytes;
+         std::string request;
 
-            // Convertir a mayusculas el comando
-            std::string comando;
-            std::string argumento;
+         while (true) {
+            request.clear();
 
-            size_t pos = request.find(" ");
+            // Leer request completo
+            while ((bytes = s2->Read(buffer, BUFSIZE)) > 0) {
+               request.append(buffer, bytes);
 
-            if (pos != std::string::npos) {
-               comando = request.substr(0, pos);
-               argumento = request.substr(pos + 1);
+               if (request.find("\r\n\r\n") != std::string::npos) {
+                  break;
+               }
+            }
+
+            // Cliente cerro conexion
+            if (request.empty()) break;
+
+            printf("Request recibido:\n%s\n", request.c_str());
+
+            // Parser 
+            std::string metodo;
+            std::string ruta;
+
+            size_t endLine = request.find("\r\n");
+            std::string firstLine = request.substr(0, endLine);
+
+            std::stringstream ss(firstLine);
+            ss >> metodo >> ruta;
+
+            std::transform(metodo.begin(), metodo.end(), metodo.begin(), ::toupper);
+
+            // Logica
+            std::string respuesta;
+
+            if (metodo == "GET") {
+               if (ruta == "/") {
+                  respuesta = ListData(RUTA_FS);
+               } else {
+                  // Quitar el /
+                  std::string nombreFigura = ruta.substr(1);
+                  respuesta = leerFigura(RUTA_FS, nombreFigura.c_str());
+               }
             } else {
-               comando = request;
+               respuesta = "Metodo no soportado";
             }
 
-            // Uppercase comando
-            std::transform(comando.begin(), comando.end(), comando.begin(), ::toupper);
+            // Respuesta HTTP
+            std::string httpResponse;
 
-            if (comando == "LISTDATA") {
-               respuesta = ListData(RUTA_FS);
-            }
-            else if (comando == "GET") {
-               respuesta = leerFigura(RUTA_FS, argumento.c_str());
-            }
-            else {
-               respuesta = "ERROR: comando no reconocido";
+            if (respuesta.find("no encontrada") != std::string::npos) {
+               httpResponse =
+                  "HTTP/1.1 404 Not Found\r\n"
+                  "Content-Type: text/plain\r\n\r\n" +
+                  respuesta;
+            } else {
+               httpResponse =
+                  "HTTP/1.1 200 OK\r\n"
+                  "Content-Type: text/plain\r\n\r\n" +
+                  respuesta;
             }
 
-            printf("Servidor recibió solicitud: %s\n", request.c_str());
-
-            s2->Write(respuesta.c_str());
-            exit(0); // Exit, finish child work
+            // Enviar respuesta (incluye '\0' para cliente)
+            s2->Write(httpResponse.c_str(), httpResponse.size() + 1);
          }
+
+         s2->Close();
+         exit(0);
       }
 
-      s2->Close(); // Close socket s2 in parent, then go wait for a new conection
+      // Proceso padre
+      s2->Close();
    }
 }
 
-bool existeArchivo(const std::string& nombre) {
+bool existeArchivo(const std::string &nombre) {
    std::ifstream archivo(nombre.c_str());
    return archivo.good();
 }

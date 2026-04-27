@@ -1,5 +1,8 @@
+// Copyright 2026a Equipo 5 CI-0123. ECCI-UCR. CC BY 4.0
+
 #include "ManipularDat.h"
 
+// Llama a la funcion de escribirStringEnBloquesLibres
 void ponerFiguras(const char* ruta){
     // Figura caballo OS
     escribirStringEnBloquesLibres(ruta, "caballo",
