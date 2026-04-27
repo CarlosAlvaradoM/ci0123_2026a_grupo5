@@ -3,10 +3,10 @@ XC=c++
 STD=-std=c++20
 WFLAGS=-Wall -Wextra
 APPNAME?=program
-LIBS?=
+LIBS=-lssl -lcrypto
 SOCKETDIR=../Socket
 INCLUDE=-I$(SOCKETDIR)/src/
-INCLUDEOBJ=$(SOCKETDIR)/build/Socket.o $(SOCKETDIR)/build/VSocket.o
+INCLUDEOBJ=$(SOCKETDIR)/build/Socket.o $(SOCKETDIR)/build/VSocket.o $(SOCKETDIR)/build/SSLSocket.o
 
 # DIRECTORIOS
 SRC=src

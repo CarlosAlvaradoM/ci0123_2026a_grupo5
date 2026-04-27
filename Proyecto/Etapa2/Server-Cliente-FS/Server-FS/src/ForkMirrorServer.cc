@@ -17,6 +17,7 @@
 #include <fstream>
 
 #include "Socket.h"
+#include "SSLSocket.h"
 #include "CodigoFileSystem/ManipularDat.h"
 #include "CodigoFileSystem/CrearDat.h"
 #include "CodigoFileSystem/BitMap.h"
@@ -26,7 +27,7 @@
 
 #define PORT 2026
 #define BUFSIZE 512
-#define RUTA_FS "../src/CodigoFileSystem/figuras.dat"
+#define RUTA_FS "src/CodigoFileSystem/figuras.dat"
 
 bool existeArchivo(const std::string &nombre);
 
@@ -47,12 +48,17 @@ int main(int argc, char **argv) {
    VSocket *s1, *s2;
    int childpid;
 
-   bool IPv6 = true;
-   s1 = new Socket('s' , IPv6);
+   bool IPv6 = false;
+   bool ssl = true;
+   printf("Inicializando socket\n");
+   s1 = new SSLSocket( (const char *) "ci0123.pem"
+      , (const char *) "key0123.pem", IPv6 );
+   printf("Se termino de inicializar sslsocket\n");
    s1->Bind(PORT);
    s1->MarkPassive(5);
 
    for (;;) {
+      // TODO: Si es SSL y el cliente no, tira error y mata el server, meter un try catch
       s2 = s1->AcceptConnection();
 
       childpid = fork();
@@ -62,6 +68,7 @@ int main(int argc, char **argv) {
       }
       // Proceso hijo
       else if (childpid == 0) {
+         printf("Proceso hijo tratando con el cliente");
          s1->Close();
 
          char buffer[BUFSIZE];
